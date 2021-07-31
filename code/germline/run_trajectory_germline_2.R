@@ -10,9 +10,9 @@ library(doParallel)
 library("viridis")
 setwd("~/github/vipcca_code/")
 source("./code/run/evaluation_function.R")
-# cl <- makeCluster(1)
-# registerDoParallel(cl)
-# clusterExport(cl, varlist=c("kbet_for_one_celltype", "get.knn", "kBET"), env=environment())
+cl <- makeCluster(10)
+registerDoParallel(cl)
+clusterExport(cl, varlist=c("kbet_for_one_celltype", "get.knn", "kBET"), env=environment())
 
 plot_figures_for_germline<-function(part="female"){
   if(part=="female"){
@@ -41,27 +41,6 @@ plot_figures_for_germline<-function(part="female"){
   reduction_names<-c("pca","Embeded_z0.45","harmony","iNMF","pca","scanorama", "pca","vipcca")
   method_names <- c("Before Integration","DESC","Harmony","Liger","MNN","Scanorama", "Seurat V3", "VIPCCA")
   
-  # # run on vipcca
-  # result_path <- paste0("./results/germline/",part,vipcca_res)
-  # Convert(paste0(result_path,"output.h5ad"),dest = "h5Seurat",overwrite = T,assay = "integrated")
-  # datasets.integrated<-LoadH5Seurat(paste0(result_path,"output.h5seurat"))
-  # saveRDS(datasets.integrated,paste0(result_path,"integrated_data.rds"))
-  # # run trajectory on scanorama
-  # result_path <- paste0("./results/germline/",part,"/scanorama/")
-  # Convert(paste0(result_path,"output.h5ad"),dest = "h5Seurat",overwrite = T,assay = "integrated")
-  # datasets.integrated<-LoadH5Seurat(paste0(result_path,"output.h5seurat"))
-  # saveRDS(datasets.integrated,paste0(result_path,"integrated_data.rds"))
-  # # run trajectory on desc
-  # result_path <- paste0("./results/germline/",part,"/desc/")
-  # Convert(paste0(result_path,"output.h5ad"),dest = "h5Seurat",overwrite = T,assay = "integrated")
-  # datasets.integrated<-LoadH5Seurat(paste0(result_path,"output.h5seurat"))
-  # saveRDS(datasets.integrated,paste0(result_path,"integrated_data.rds"))
-  # read raw data
-  # result_path <- paste0("./results/germline/",part,"/uncorrected/")
-  # datasets.uncorrected <- readRDS(paste0(result_path,"integrated_data.rds"))
-  # X=datasets.uncorrected@assays$integrated@scale.data
-  # X<-t(X[markers,])
-  ## plot trajectory pseudotime and collection time
   g1list<-list()
   g2list<-list()
   mmlist<-c()
@@ -70,7 +49,6 @@ plot_figures_for_germline<-function(part="female"){
   require('FNN')
   #browser()
   for(i in 1:length(result_dir)){
-    i=2
   	result_path=paste0("./results/germline/",part,"/",result_dir[i],"/")
   	print(result_path)
   	datasets.integrated <- readRDS(paste0(result_path,"integrated_data.rds"))
@@ -96,7 +74,10 @@ plot_figures_for_germline<-function(part="female"){
   	# 
   	g1<-DimPlot(datasets.integrated,group.by = c("weeks"),pt.size=10)+
   	  scale_color_viridis(discrete = TRUE,option = "D")+ggtitle(method_names[i])
-  	g2<-plot_trajectory_germline(datasets.integrated,result_path,start_cells = start_cell,
+  	# if(i<3)
+  	#   g2<-DimPlot(datasets.integrated,group.by = c("batch"),pt.size=10)+ggtitle(method_names[i])
+  	# else
+    g2<-plot_trajectory_germline(datasets.integrated,result_path,start_cells = start_cell,
   	                             method=method_names[i],reduction = reduction_names[i])
   	g1list<-list.append(g1list,g1)
   	g2list<-list.append(g2list,g2)
@@ -135,7 +116,7 @@ plot_figures_for_germline<-function(part="female"){
   g1list<-lapply(g1list, function(x) x+theme_bw(base_size = 60)+theme(axis.title = element_blank()))
   g2list<-lapply(g2list, function(x) x+theme_bw(base_size = 60)+theme(axis.title = element_blank()))
   
-  legend_1<-cowplot::get_legend(g1list[[1]]+guides(col=guide_legend("Weeks"))+
+  legend_1<-cowplot::get_legend(g1list[[1]]+guides(col=guide_legend("Weeks",nrow = 1))+
   																 	theme(legend.text = element_text(size = 60),
   																 				legend.title = element_text(size = 60),
   																 				legend.direction = "horizontal"))
@@ -203,8 +184,12 @@ plot_figures_for_germline<-function(part="female"){
   dev.off()
   saveRDS(list(p1arow,p1brow,legend_1,legend_2,g3,g4,gc,gmarker,gcorr),file = paste0("./results/germline/",part,"/ggplots.rds"))
 }
-#debug(plot_figures_for_germline)
+debug(plot_figures_for_germline)
 plot_figures_for_germline(part = "male")
+
+
+
+
 plot_male<-readRDS(file = "./results/germline/male/ggplots.rds")
 plot_figures_for_germline(part = "female")
 plot_female <- readRDS(file = "./results/germline/female/ggplots.rds")

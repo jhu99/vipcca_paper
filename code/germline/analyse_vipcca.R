@@ -6,7 +6,7 @@ library(monocle3)
 library(SeuratDisk)
 library(rlist)
 
-part="female"
+part="male"
 source("./code/run/evaluation_function.R")
 # run trajectory on cvae result
 result_path=paste0("./results/germline/",part,"/VIPCCA/")
@@ -40,7 +40,7 @@ dev.off()
 
 # feature plot for  result
 rm(list=ls())
-part="female"
+part="male"
 # female FGC and male FGC
 source("./code/run/evaluation_function.R")
 result_path=paste0("./results/germline/",part,"/VIPCCA/")
